@@ -1,7 +1,10 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import "../css/credit-card.css";
 import "../css/form-style.css";
 import Cards from "../react-credit-cards";
+import Alerta from "./Alert";
+import axios from "axios";
+
 class Creditcard extends Component {
   timeoutID;
   constructor(props) {
@@ -13,8 +16,61 @@ class Creditcard extends Component {
       expiryyear: "",
       focus: "",
       name: "",
-      number: ""
+      number: "",
+      visible: false,
+      data: {
+        responseCode: "",
+        authCode: "",
+        avsResultCode: "",
+        cvvResultCode: "",
+        cavvResultCode: "",
+        transId: "",
+        refTransID: "",
+        transHash: "",
+        testRequest: "",
+        accountNumber: "",
+        accountType: "",
+        errors: {
+          error: [
+            {
+              errorCode: "",
+              errorText: "",
+            },
+          ],
+        },
+        userFields: {
+          userField: [
+            {
+              name: "",
+              value: "",
+            },
+            {
+              name: "",
+              value: "",
+            },
+          ],
+        },
+        transHashSha2:
+          "",
+      }
     };
+
+
+  }
+
+  previewPricingSubmit(requestJson) {
+    axios
+      .post(
+        "http://localhost/sample-code-php/PaymentTransactions/authorize-credit-card.php",
+        requestJson
+      )
+      .then((response) => {
+        this.setState({ data: response.data });
+        console.log("Response:", this.state.data.responseCode)
+        if(this.state.data.responseCode > 0){
+          this.setState({ visible: true });
+        }
+      });
   }
 
   setup = () => {
@@ -78,6 +134,12 @@ class Creditcard extends Component {
   //storing data on submit button click
   submit = (e) => {
     sessionStorage.setItem("user", JSON.stringify(this.state));
+    this.previewPricingSubmit({
+      cardNumber: this.state.number.replace(/ /g, ""),
+      expirationDate: this.state.expiryyear + "-" + this.state.expiry,
+      cardCode: this.state.cvc,
+      amount: 1,
+    });
     e.preventDefault();
 
     //restoring initial state of the app
@@ -87,7 +149,7 @@ class Creditcard extends Component {
       cvc: "",
       expiry: "",
       expiryyear: "",
-      focus: ""
+      focus: "",
     });
   };
 
@@ -176,15 +238,18 @@ class Creditcard extends Component {
       );
       this.setState({ [name]: ele.value });
     } else this.setState({ [name]: value });
+
+    console.log("lot", document.getElementById("cardHolder").value);
   };
 
   render() {
     return (
       <div>
+        <Alerta errorCode={this.state.data.errors.error[0].errorCode} errorText={this.state.data.errors.error[0].errorText} visible={this.state.visible} />
         <div className="credit-card ">
           <Cards
-            locale={{ valid: "Expires" }}
-            placeholders={{ name: "FULL NAME" }}
+            locale={{ valid: "Vencimiento" }}
+            placeholders={{ name: "NOMBRE Y APELLIDO" }}
             cvc={this.state.cvc}
             expiry={this.state.expiry}
             expiryyear={this.state.expiryyear}
@@ -197,7 +262,7 @@ class Creditcard extends Component {
           <form className="payment-form">
             <div className="form-group">
               <label htmlFor="cardNumber" className="card-label">
-                Card Number
+                N° de Tarjeta
               </label>
               <input
                 type="text"
@@ -215,7 +280,7 @@ class Creditcard extends Component {
             </div>
             <div className="form-group">
               <label htmlFor="cardHolder" className="card-label">
-                Card holder
+                Nombre y Apellido
               </label>
               <input
                 type="text"
@@ -235,7 +300,7 @@ class Creditcard extends Component {
               <div className="expiry-class">
                 <div className="form-group card-month ">
                   <label htmlFor="cardMonth" className="card-label">
-                    Expiration Date
+                    Vencimiento
                   </label>
 
                   <select
@@ -248,7 +313,7 @@ class Creditcard extends Component {
                     className="form-control form-control-lg"
                   >
                     <option value="" defaultChecked="true">
-                      Month
+                      Mes
                     </option>
                     <option value="01">01</option>
                     <option value="02">02</option>
@@ -275,7 +340,7 @@ class Creditcard extends Component {
                     className="form-control form-control-lg"
                   >
                     <option value="" defaultChecked="true">
-                      Year
+                      Año
                     </option>
                     <option value="2020">2020</option>
                     <option value="2021">2021</option>
@@ -316,7 +381,7 @@ class Creditcard extends Component {
               className="btn btn-primary btn-lg btn-block"
               onClick={this.submit}
             >
-              Submit
+              Procesar Pago
             </button>
           </form>
         </div>
