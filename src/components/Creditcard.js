@@ -38,6 +38,14 @@ class Creditcard extends Component {
             },
           ],
         },
+        messages: {
+          message: [
+            {
+              code: "",
+              description: "",
+            },
+          ],
+        },
         userFields: {
           userField: [
             {
@@ -50,25 +58,26 @@ class Creditcard extends Component {
             },
           ],
         },
-        transHashSha2:
-          "",
-      }
+        transHashSha2: "",
+      },
+      res: "",
     };
-
-
   }
 
   previewPricingSubmit(requestJson) {
     axios
       .post(
-        "http://localhost/sample-code-php/PaymentTransactions/authorize-credit-card.php",
+        "http://localhost:8080/PaymentTransactions/authorize-credit-card.php",
         requestJson
       )
       .then((response) => {
         this.setState({ data: response.data });
-        console.log("Response:", this.state.data.responseCode)
-        if(this.state.data.responseCode > 0){
-          this.setState({ visible: true });
+        console.log("Response:", this.state.data.responseCode);
+        if (this.state.data.responseCode == 1) {
+          this.setState({ visible: true, res:  this.state.data.messages.message[0].description });
+        }
+        if (this.state.data.responseCode > 1) {
+          this.setState({ visible: true, res:  this.state.data.errors.error[0].errorText });
         }
       });
   }
@@ -245,7 +254,11 @@ class Creditcard extends Component {
   render() {
     return (
       <div>
-        <Alerta errorCode={this.state.data.errors.error[0].errorCode} errorText={this.state.data.errors.error[0].errorText} visible={this.state.visible} />
+        <Alerta
+          resCode={this.state.data.responseCode}
+          description={this.state.res}
+          visible={this.state.visible}
+        />
         <div className="credit-card ">
           <Cards
             locale={{ valid: "Vencimiento" }}

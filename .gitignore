@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/tickets
 /.pnp
 .pnp.js
 
